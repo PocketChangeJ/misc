@@ -1,0 +1,63 @@
+#!/usr/bin/env perl
+###################################
+# Author: Jiang Li
+# Email:  riverlee2008@gmail.com
+# Date:   Thu Aug 14 15:49:23 2014
+###################################
+use strict;
+use warnings;
+
+###########Description############
+#
+my $usage = <<USAGE;
+Usage: makeCleavageSite.pl in.bam out.prefix chromesizefle genome
+    in.bam        --- Your alignment file in bam format
+    out.prefix    --- outout file prefix, which will generate out.prefix.cleavage.bedGraph, 
+                      and out.prefix.cleavage.bw
+    chromesizefle --- A tab-delimited file, e.g, hg19.chrom.sizes, this will be used
+                      for program bedItemOverlapCount and bedGraphToBigWig
+    genome        --- genome build version, e.g, hg19. This will be used for program
+                      bedItemOverlapCount
+
+USAGE
+
+my ($inbam,$prefix,$chromsize,$genome) = @ARGV;
+if(@ARGV != 4){
+    print STDERR $usage;
+    exit 1;
+}
+
+if(! -e "$inbam") {
+    print STDERR "File '$inbam' doesn't exists\n";
+    print STDERR $usage;
+    exit 1;
+}
+if(! -e "$chromsize") {
+    print STDERR "File '$chromsize' doesn't exists\n";
+    print STDERR $usage;
+    exit 1;
+}
+
+my $outbedgraph = "${prefix}.cleavage.bedGraph";
+my $outbigwig = "${prefix}.cleavage.bw";
+
+### Step 1, convert to bed format file
+info("Convert bam to bedGraph format",1);
+my $com1 = "samtools view -F 4 $inbam |perl -lane 'print join \"\\t\",(\$F[2],\$F[3]-1,\$F[3])' |sort -k1,1 -k2,2n | bedItemOverlapCount $genome -chromSize=$chromsize stdin |sort -k1,1 -k2,2n > $outbedgraph";
+print STDERR "Command:\n$com1\n";
+#`$com1`;
+
+info("Convert bedGraph to bigwig",1);
+my $com2 = "bedGraphToBigWig $outbedgraph $chromsize $outbigwig";
+print STDERR "Command:\n$com2\n";
+
+sub info{
+    my ($str,$flag) = @_;
+    print STDERR "[",scalar(localtime),"] $str";
+
+    # if flag provided, then print the newline
+    if(defined($flag) && $flag){
+        print STDERR "\n";
+    }
+}
+

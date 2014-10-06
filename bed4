@@ -1,0 +1,43 @@
+#!/usr/bin/env perl
+###################################
+# Author: Jiang Li
+# Email: riverlee2008@gmail.com
+# Date: Wed Apr 17 17:29:13 2013
+###################################
+use strict;
+use warnings;
+
+
+# our.bed will me
+my $usage=<<USAGE;
+Usage: bed4 in.bed out.bed [to4|from4]
+If the 3rd parameter is to4, means the in.bed has more than 4 columns, we will merge the cloumns from 4th to the end seperated by '|' and replace the 4th column.
+If the 3rd parameter is from4, means we will split the 4th column in 'in.bed'.
+USAGE
+
+
+my ($in,$out,$str) = @ARGV;
+
+if(@ARGV !=3 || ! -e $in || ($str ne "to4" && $str ne "from4") ){
+    die $usage;
+}
+open(IN,$in) or die $!;
+open(OUT,">$out") or die $!;
+while(<IN>){
+    next if (/^#/);
+    s/\r|\n//g;
+    my ($chr,$start,$end,@other) = split "\t";
+    if($str eq "to4"){
+        my $column4 = join "|",@other;
+        print OUT join "\t",($chr,$start,$end,$column4);
+        print OUT "\n";
+    }else{
+        my @array = split /\|/,$other[0];
+        print OUT join "\t",($chr,$start,$end,@array);
+        print OUT "\n";
+    }
+}
+close IN;
+close OUT;
+
+

@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my $usage="Usage: mac2linux input\nConvert mac newline \\r to linux newline \\n\n\n";
+
+die $usage if (@ARGV !=1);
+
+my $in = $ARGV[0];
+
+my $out = "$in.tmp";
+
+# use tr to convert
+my $com = "tr '\r' '\n' < $in >$out ";
+
+`$com`;
+
+$com="mv $out $in";
+
+`$com`;
+
